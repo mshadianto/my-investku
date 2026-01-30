@@ -94,6 +94,8 @@ async function handleWebhook(data, env) {
     const messageBody = payload.body || payload.text || payload._data?.body || '';
     let from = payload.from || payload.chatId || payload._data?.from;
     const isFromMe = payload.fromMe || payload._data?.fromMe || false;
+    // Get alternative JID (phone number format) when WAHA uses LID addressing
+    const remoteJidAlt = payload._data?.key?.remoteJidAlt;
 
     // Normalize phone number: convert local 0-prefix to international 62-prefix
     if (from && from.startsWith('0')) {
@@ -106,16 +108,29 @@ async function handleWebhook(data, env) {
       return;
     }
 
-    // Skip bot's own replies (fromMe from non-owner, or bot-generated messages)
-    if (isFromMe && from !== OWNER_NUMBER && !from?.includes('628159658833')) {
+    // Check if sender is the owner — match by phone number, LID, or me.id
+    const meId = data.me?.id;
+    const meLid = data.me?.lid;
+    const isOwner = from === OWNER_NUMBER
+      || from?.includes('628159658833')
+      || remoteJidAlt?.includes('628159658833')
+      || (isFromMe && (meId === OWNER_NUMBER || meId?.includes('628159658833')));
+
+    // Skip bot's own outgoing replies to prevent loops
+    if (isFromMe && from !== OWNER_NUMBER && !from?.includes('628159658833') && !remoteJidAlt?.includes('628159658833')) {
       console.log('Skipping: bot reply');
       return;
     }
 
-    // Only respond to owner (security) — silently ignore non-owner messages
-    if (!isFromMe && from !== OWNER_NUMBER && !from?.includes('628159658833')) {
+    // Only respond to owner — silently ignore non-owner messages
+    if (!isOwner) {
       console.log('Skipping: not from owner', from);
       return;
+    }
+
+    // Use phone number format for reply (prefer remoteJidAlt over LID)
+    if (from?.endsWith('@lid') && remoteJidAlt) {
+      from = remoteJidAlt.replace('@s.whatsapp.net', '@c.us');
     }
 
     console.log(`Processing message from ${from}: ${messageBody}`);
