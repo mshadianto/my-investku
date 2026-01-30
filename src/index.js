@@ -312,24 +312,25 @@ async function handleChat(request, env, corsHeaders) {
   // Check for transaction patterns
   const transactionLog = await detectAndLogTransaction(env, message);
 
-  // Call Claude API
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
+  // Call Groq API
+  const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'x-api-key': env.CLAUDE_API_KEY,
-      'anthropic-version': '2023-06-01'
+      'Authorization': `Bearer ${env.GROQ_API_KEY}`
     },
     body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
+      model: 'llama-3.3-70b-versatile',
       max_tokens: 1024,
-      system: `${SYSTEM_PROMPT}\n\n# CURRENT PORTFOLIO\n${portfolioContext}`,
-      messages: [{ role: 'user', content: message }]
+      messages: [
+        { role: 'system', content: `${SYSTEM_PROMPT}\n\n# CURRENT PORTFOLIO\n${portfolioContext}` },
+        { role: 'user', content: message }
+      ]
     })
   });
 
-  const claudeResponse = await response.json();
-  let reply = claudeResponse.content?.[0]?.text || 'Maaf Kak Sopian, ada kendala teknis.';
+  const aiResponse = await response.json();
+  let reply = aiResponse.choices?.[0]?.message?.content || aiResponse.error?.message || 'Maaf Kak Sopian, ada kendala teknis.';
 
   // Append transaction log if detected
   if (transactionLog) {
@@ -368,24 +369,25 @@ async function handleWAHAWebhook(request, env, corsHeaders) {
 
     const transactionLog = await detectAndLogTransaction(env, msg);
 
-    // Call Claude
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    // Call Groq API
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': env.CLAUDE_API_KEY,
-        'anthropic-version': '2023-06-01'
+        'Authorization': `Bearer ${env.GROQ_API_KEY}`
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: 'llama-3.3-70b-versatile',
         max_tokens: 1024,
-        system: `${SYSTEM_PROMPT}\n\n# CURRENT PORTFOLIO\n${portfolioContext}`,
-        messages: [{ role: 'user', content: msg }]
+        messages: [
+          { role: 'system', content: `${SYSTEM_PROMPT}\n\n# CURRENT PORTFOLIO\n${portfolioContext}` },
+          { role: 'user', content: msg }
+        ]
       })
     });
 
-    const claudeResponse = await response.json();
-    let reply = claudeResponse.content?.[0]?.text || 'Maaf ada kendala teknis.';
+    const aiResponse = await response.json();
+    let reply = aiResponse.choices?.[0]?.message?.content || 'Maaf ada kendala teknis.';
 
     if (transactionLog) {
       reply += `\n\n✅ Log: ${transactionLog}`;

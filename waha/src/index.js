@@ -198,23 +198,24 @@ _Powered by Claude AI_ 🤖`;
 
   // Call Claude API for other queries
   try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': env.CLAUDE_API_KEY,
-        'anthropic-version': '2023-06-01'
+        'Authorization': `Bearer ${env.GROQ_API_KEY}`
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: 'llama-3.3-70b-versatile',
         max_tokens: 500,
-        system: `${SYSTEM_PROMPT}\n\n# PORTFOLIO SAAT INI\n${portfolioContext}`,
-        messages: [{ role: 'user', content: message }]
+        messages: [
+          { role: 'system', content: `${SYSTEM_PROMPT}\n\n# PORTFOLIO SAAT INI\n${portfolioContext}` },
+          { role: 'user', content: message }
+        ]
       })
     });
 
     const result = await response.json();
-    let reply = result.content?.[0]?.text || 'Maaf ada kendala, coba lagi ya Kak.';
+    let reply = result.choices?.[0]?.message?.content || 'Maaf ada kendala, coba lagi ya Kak.';
 
     // Append transaction log if detected
     if (transactionLog) {
