@@ -112,10 +112,9 @@ async function handleWebhook(data, env) {
       return;
     }
 
-    // Only respond to owner (security) — owner's fromMe messages are allowed
+    // Only respond to owner (security) — silently ignore non-owner messages
     if (!isFromMe && from !== OWNER_NUMBER && !from?.includes('628159658833')) {
       console.log('Skipping: not from owner', from);
-      await sendMessage(from, '⚠️ Maaf, bot ini hanya untuk Kak Sopian.', env);
       return;
     }
 
