@@ -92,8 +92,13 @@ async function handleWebhook(request, env) {
 
     // Extract message details
     const messageBody = payload.body || payload.text || payload._data?.body || '';
-    const from = payload.from || payload.chatId || payload._data?.from;
+    let from = payload.from || payload.chatId || payload._data?.from;
     const isFromMe = payload.fromMe || payload._data?.fromMe || false;
+
+    // Normalize phone number: convert local 0-prefix to international 62-prefix
+    if (from && from.startsWith('0')) {
+      from = '62' + from.substring(1);
+    }
 
     // Skip if no message, from bot itself, or not from owner
     if (!messageBody || isFromMe) {
@@ -104,7 +109,7 @@ async function handleWebhook(request, env) {
     // Only respond to owner (security)
     if (from !== OWNER_NUMBER && !from?.includes('628159658833')) {
       console.log('Skipping: not from owner', from);
-      await sendMessage(from, '⚠️ Maaf, bot ini hanya untuk Kak Sopian.');
+      await sendMessage(from, '⚠️ Maaf, bot ini hanya untuk Kak Sopian.', env);
       return;
     }
 
@@ -114,7 +119,7 @@ async function handleWebhook(request, env) {
     const reply = await processMessage(messageBody, env);
 
     // Send reply via WAHA
-    await sendMessage(from, reply);
+    await sendMessage(from, reply, env);
 
   } catch (error) {
     console.error('Webhook error:', error);
@@ -303,11 +308,14 @@ async function detectAndLogTransaction(message, env) {
   return null;
 }
 
-async function sendMessage(chatId, text) {
+async function sendMessage(chatId, text, env) {
   try {
     const response = await fetch(`${WAHA_URL}/api/sendText`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Api-Key': env.WAHA_API_KEY || ''
+      },
       body: JSON.stringify({
         chatId: chatId,
         text: text,

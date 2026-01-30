@@ -397,7 +397,10 @@ async function handleWAHAWebhook(request, env, corsHeaders) {
     if (env.WAHA_URL) {
       await fetch(`${env.WAHA_URL}/api/sendText`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Api-Key': env.WAHA_API_KEY || ''
+        },
         body: JSON.stringify({
           chatId: sender,
           text: reply,
