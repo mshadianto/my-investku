@@ -29,8 +29,8 @@ cd waha && npm run deploy
 wrangler d1 execute sopian-wealth-ai-db --command "SQL_HERE"
 
 # Set secrets (each worker needs its own)
-wrangler secret put CLAUDE_API_KEY              # root worker
-cd waha && wrangler secret put CLAUDE_API_KEY   # waha worker
+wrangler secret put GROQ_API_KEY               # root worker
+cd waha && wrangler secret put GROQ_API_KEY    # waha worker
 
 # Configure WAHA webhook (edit WORKER_URL first)
 # Note: setup-webhook.sh exists in both root and waha/ (identical copies)
@@ -41,20 +41,20 @@ There are no test or lint scripts configured in either worker.
 
 ## Architecture
 
-Two single-file Cloudflare Workers (`src/index.js` in each), both exporting a `fetch` handler. No build step — plain JavaScript deployed directly. Both bind to the **same D1 database** (`sopian-wealth-ai-db`, id `17423673-ec65-43dd-99fd-c633c9aab833`). Both use `claude-sonnet-4-20250514` for AI calls.
+Two single-file Cloudflare Workers (`src/index.js` in each), both exporting a `fetch` handler. No build step — plain JavaScript deployed directly. Both bind to the **same D1 database** (`sopian-wealth-ai-db`, id `17423673-ec65-43dd-99fd-c633c9aab833`). Both use **Groq API** (`llama-3.3-70b-versatile`) via the OpenAI-compatible chat completions endpoint.
 
 ### Root Worker (`sopian-wealth-ai`)
 
 **Runtime bindings (defined in `wrangler.toml`):**
 - `env.DB` — Cloudflare D1 database
-- `env.CLAUDE_API_KEY` — Anthropic API key (secret)
+- `env.GROQ_API_KEY` — Groq API key (secret)
 - `env.WAHA_URL` — WAHA server URL (secret, optional)
 
 **Request flow:**
 1. Worker receives HTTP request
 2. Routes by `pathname` + `method` (manual if/else chain, no router library)
 3. Portfolio/transaction handlers query D1 directly via prepared statements
-4. Chat handler (`/api/chat`) and webhook handler (`/webhook`) both: fetch portfolio from D1 for context, run `detectAndLogTransaction()` regex parser, then call Claude API with system prompt + portfolio context
+4. Chat handler (`/api/chat`) and webhook handler (`/webhook`) both: fetch portfolio from D1 for context, run `detectAndLogTransaction()` regex parser, then call Groq API with system prompt + portfolio context
 5. WAHA webhook additionally sends the reply back to WhatsApp via `WAHA_URL/api/sendText`
 
 ### WAHA Worker (`wealth-ai-waha`)
@@ -65,7 +65,7 @@ Dedicated WhatsApp chatbot that receives WAHA webhooks and responds via the WAHA
 - Hardcoded WAHA constants: `WAHA_URL`, `SESSION` ("investku"), `OWNER_NUMBER` (`628159658833@c.us`)
 - Owner-only security: rejects messages not from `OWNER_NUMBER`
 - Uses `ctx.waitUntil()` for async webhook processing (immediate 200 response)
-- `/help` and `/status` commands handled locally without calling Claude API
+- `/help` and `/status` commands handled locally without calling Groq API
 - System prompt is in Bahasa Indonesia with WhatsApp formatting constraints (max 1000 chars, `*bold*` syntax)
 - Has a `/test` endpoint for manual testing without WhatsApp
 - `max_tokens` set to 500 (vs 1024 in root worker) for WhatsApp readability
