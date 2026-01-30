@@ -30,7 +30,9 @@ wrangler d1 execute sopian-wealth-ai-db --command "SQL_HERE"
 
 # Set secrets (each worker needs its own)
 wrangler secret put GROQ_API_KEY               # root worker
+wrangler secret put WAHA_API_KEY               # root worker (for WAHA auth)
 cd waha && wrangler secret put GROQ_API_KEY    # waha worker
+cd waha && wrangler secret put WAHA_API_KEY    # waha worker (for WAHA auth)
 
 # Configure WAHA webhook (edit WORKER_URL first)
 # Note: setup-webhook.sh exists in both root and waha/ (identical copies)
@@ -49,6 +51,7 @@ Two single-file Cloudflare Workers (`src/index.js` in each), both exporting a `f
 - `env.DB` — Cloudflare D1 database
 - `env.GROQ_API_KEY` — Groq API key (secret)
 - `env.WAHA_URL` — WAHA server URL (secret, optional)
+- `env.WAHA_API_KEY` — WAHA server API key for authenticated requests (secret, optional)
 
 **Request flow:**
 1. Worker receives HTTP request
