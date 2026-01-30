@@ -57,7 +57,8 @@ export default {
 
     // WAHA Webhook
     if (url.pathname === '/webhook' && request.method === 'POST') {
-      ctx.waitUntil(handleWebhook(request, env));
+      const data = await request.json();
+      ctx.waitUntil(handleWebhook(data, env));
       return new Response(JSON.stringify({ status: 'ok' }), {
         headers: { 'Content-Type': 'application/json' }
       });
@@ -76,9 +77,8 @@ export default {
   }
 };
 
-async function handleWebhook(request, env) {
+async function handleWebhook(data, env) {
   try {
-    const data = await request.json();
     console.log('Webhook received:', JSON.stringify(data));
 
     // Handle different WAHA event formats
@@ -100,14 +100,20 @@ async function handleWebhook(request, env) {
       from = '62' + from.substring(1);
     }
 
-    // Skip if no message, from bot itself, or not from owner
-    if (!messageBody || isFromMe) {
-      console.log('Skipping: empty message or from self');
+    // Skip empty messages
+    if (!messageBody) {
+      console.log('Skipping: empty message');
       return;
     }
 
-    // Only respond to owner (security)
-    if (from !== OWNER_NUMBER && !from?.includes('628159658833')) {
+    // Skip bot's own replies (fromMe from non-owner, or bot-generated messages)
+    if (isFromMe && from !== OWNER_NUMBER && !from?.includes('628159658833')) {
+      console.log('Skipping: bot reply');
+      return;
+    }
+
+    // Only respond to owner (security) — owner's fromMe messages are allowed
+    if (!isFromMe && from !== OWNER_NUMBER && !from?.includes('628159658833')) {
       console.log('Skipping: not from owner', from);
       await sendMessage(from, '⚠️ Maaf, bot ini hanya untuk Kak Sopian.', env);
       return;
