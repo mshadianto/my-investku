@@ -1,0 +1,16 @@
+{
+  "name": "wealth-ai-waha",
+  "version": "1.0.0",
+  "description": "Personal Wealth AI - WAHA WhatsApp Chatbot",
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "tail": "wrangler tail"
+  },
+  "author": "Kak Sopian",
+  "license": "MIT",
+  "devDependencies": {
+    "wrangler": "^3.0.0"
+  }
+}

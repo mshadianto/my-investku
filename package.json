@@ -1,0 +1,22 @@
+{
+  "name": "sopian-wealth-ai",
+  "version": "1.0.0",
+  "description": "Kak Sopian's Personal Wealth AI - GRC-based Sharia Portfolio Management",
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "tail": "wrangler tail"
+  },
+  "keywords": [
+    "cloudflare-workers",
+    "portfolio-management",
+    "sharia-finance",
+    "grc"
+  ],
+  "author": "Kak Sopian",
+  "license": "MIT",
+  "devDependencies": {
+    "wrangler": "^3.0.0"
+  }
+}

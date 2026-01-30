@@ -1,0 +1,16 @@
+name = "wealth-ai-waha"
+main = "src/index.js"
+compatibility_date = "2024-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+# D1 Database binding
+[[d1_databases]]
+binding = "DB"
+database_name = "sopian-wealth-ai-db"
+database_id = "17423673-ec65-43dd-99fd-c633c9aab833"
+
+# Secrets (set via wrangler secret put):
+# - CLAUDE_API_KEY
+
+[vars]
+ENVIRONMENT = "production"
